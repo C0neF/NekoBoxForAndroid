@@ -20,7 +20,7 @@ import (
 
 	box "github.com/sagernet/sing-box"
 	"libcore/conntrack"
-	"github.com/sagernet/sing-box/common/dialer"
+
 	"github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/option"
 	"github.com/sagernet/sing/service"
