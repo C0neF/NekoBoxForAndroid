@@ -2,6 +2,7 @@ package libcore
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -90,6 +91,7 @@ func NewSingBoxInstance(config string, localTransport LocalDNSTransport) (b *Box
 
 	// parse options
 	var options option.Options
+	config = cleanLegacyInboundFields(config)
 	err = options.UnmarshalJSONContext(ctx, []byte(config))
 	if err != nil {
 		return nil, fmt.Errorf("decode config: %v", err)
@@ -243,4 +245,30 @@ func goServeProtect(start bool) {
 			intfBox.AutoDetectInterfaceControl(int32(fd))
 		})
 	}
+}
+
+func cleanLegacyInboundFields(config string) string {
+	var val map[string]any
+	err := json.Unmarshal([]byte(config), &val)
+	if err != nil {
+		return config
+	}
+	inbounds, ok := val["inbounds"].([]any)
+	if !ok {
+		return config
+	}
+	for _, inbound := range inbounds {
+		inboundMap, ok := inbound.(map[string]any)
+		if !ok {
+			continue
+		}
+		delete(inboundMap, "sniff")
+		delete(inboundMap, "sniff_override_destination")
+		delete(inboundMap, "domain_strategy")
+	}
+	cleaned, err := json.Marshal(val)
+	if err != nil {
+		return config
+	}
+	return string(cleaned)
 }
