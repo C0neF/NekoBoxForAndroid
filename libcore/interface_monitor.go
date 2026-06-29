@@ -1,14 +1,17 @@
 package libcore
 
 import (
+	"sync"
+
 	tun "github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common/control"
 	"github.com/sagernet/sing/common/x/list"
 )
 
-// wtf
-
-type interfaceMonitorStub struct{}
+type interfaceMonitorStub struct {
+	access       sync.Mutex
+	myInterfaces []string
+}
 
 func (s *interfaceMonitorStub) Start() error {
 	return nil
@@ -38,12 +41,22 @@ func (s *interfaceMonitorStub) UnregisterCallback(element *list.Element[tun.Defa
 }
 
 func (s *interfaceMonitorStub) RegisterMyInterface(interfaceName string) {
+	s.access.Lock()
+	defer s.access.Unlock()
+	s.myInterfaces = append(s.myInterfaces, interfaceName)
 }
 
 func (s *interfaceMonitorStub) MyInterface() string {
+	s.access.Lock()
+	defer s.access.Unlock()
+	if len(s.myInterfaces) > 0 {
+		return s.myInterfaces[0]
+	}
 	return ""
 }
 
 func (s *interfaceMonitorStub) MyInterfaces() []string {
-	return nil
+	s.access.Lock()
+	defer s.access.Unlock()
+	return s.myInterfaces
 }

@@ -6,15 +6,18 @@ import (
 	"fmt"
 	"libcore/procfs"
 	"log"
+	"net"
 	"net/netip"
 	"strings"
 	"syscall"
 
 	"github.com/matsuridayo/libneko/neko_log"
 	"github.com/sagernet/sing-box/adapter"
+	C "github.com/sagernet/sing-box/constant"
 	sblog "github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
 	tun "github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing/common/control"
 	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/logger"
 )
@@ -85,11 +88,41 @@ func (w *boxPlatformInterfaceWrapper) CreateDefaultInterfaceMonitor(l logger.Log
 }
 
 func (w *boxPlatformInterfaceWrapper) UsePlatformNetworkInterfaces() bool {
-	return false
+	return true
 }
 
 func (w *boxPlatformInterfaceWrapper) NetworkInterfaces() ([]adapter.NetworkInterface, error) {
-	return nil, errors.New("wtf")
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	var result []adapter.NetworkInterface
+	for _, intf := range interfaces {
+		if intf.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		if intf.Flags&net.FlagUp == 0 {
+			continue
+		}
+		it := C.InterfaceTypeOther
+		name := strings.ToLower(intf.Name)
+		if strings.HasPrefix(name, "wlan") || strings.Contains(name, "wifi") {
+			it = C.InterfaceTypeWIFI
+		} else if strings.HasPrefix(name, "rmnet") || strings.HasPrefix(name, "ccmni") || strings.Contains(name, "mobile") || strings.Contains(name, "cellular") {
+			it = C.InterfaceTypeCellular
+		} else if strings.HasPrefix(name, "eth") {
+			it = C.InterfaceTypeEthernet
+		}
+		result = append(result, adapter.NetworkInterface{
+			Interface: control.Interface{
+				Index: intf.Index,
+				Name:  intf.Name,
+				Flags: intf.Flags,
+			},
+			Type: it,
+		})
+	}
+	return result, nil
 }
 
 func (w *boxPlatformInterfaceWrapper) NetworkExtensionIncludeAllNetworks() bool {
