@@ -2,7 +2,6 @@ package libcore
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"libcore/procfs"
 	"log"
