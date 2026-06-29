@@ -8,7 +8,7 @@ import (
 
 	"github.com/oschwald/maxminddb-golang"
 	C "github.com/sagernet/sing-box/constant"
-	"github.com/sagernet/sing-box/nekoutils"
+	"libcore/nekoutils"
 	"github.com/sagernet/sing-box/option"
 )
 
