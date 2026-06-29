@@ -265,6 +265,20 @@ func cleanLegacyInboundFields(config string) string {
 		delete(inboundMap, "sniff")
 		delete(inboundMap, "sniff_override_destination")
 		delete(inboundMap, "domain_strategy")
+
+		// Convert legacy tun address fields (inet4_address, inet6_address) to address
+		var addresses []any
+		if inet4, ok := inboundMap["inet4_address"].([]any); ok {
+			addresses = append(addresses, inet4...)
+		}
+		if inet6, ok := inboundMap["inet6_address"].([]any); ok {
+			addresses = append(addresses, inet6...)
+		}
+		if len(addresses) > 0 {
+			inboundMap["address"] = addresses
+			delete(inboundMap, "inet4_address")
+			delete(inboundMap, "inet6_address")
+		}
 	}
 	cleaned, err := json.Marshal(val)
 	if err != nil {
