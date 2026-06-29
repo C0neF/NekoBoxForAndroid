@@ -92,35 +92,39 @@ func (w *boxPlatformInterfaceWrapper) UsePlatformNetworkInterfaces() bool {
 
 func (w *boxPlatformInterfaceWrapper) NetworkInterfaces() ([]adapter.NetworkInterface, error) {
 	interfaces, err := net.Interfaces()
-	if err != nil {
-		return nil, err
-	}
 	var result []adapter.NetworkInterface
-	for _, intf := range interfaces {
-		if intf.Flags&net.FlagLoopback != 0 {
-			continue
+	if err == nil {
+		for _, intf := range interfaces {
+			if intf.Flags&net.FlagLoopback != 0 {
+				continue
+			}
+			it := C.InterfaceTypeOther
+			name := strings.ToLower(intf.Name)
+			if strings.HasPrefix(name, "wlan") || strings.Contains(name, "wifi") {
+				it = C.InterfaceTypeWIFI
+			} else if strings.HasPrefix(name, "rmnet") || strings.HasPrefix(name, "ccmni") || strings.Contains(name, "mobile") || strings.Contains(name, "cellular") {
+				it = C.InterfaceTypeCellular
+			} else if strings.HasPrefix(name, "eth") {
+				it = C.InterfaceTypeEthernet
+			}
+			result = append(result, adapter.NetworkInterface{
+				Interface: control.Interface{
+					Index: intf.Index,
+					Name:  intf.Name,
+					Flags: intf.Flags,
+				},
+				Type: it,
+			})
 		}
-		if intf.Flags&net.FlagUp == 0 {
-			continue
-		}
-		it := C.InterfaceTypeOther
-		name := strings.ToLower(intf.Name)
-		if strings.HasPrefix(name, "wlan") || strings.Contains(name, "wifi") {
-			it = C.InterfaceTypeWIFI
-		} else if strings.HasPrefix(name, "rmnet") || strings.HasPrefix(name, "ccmni") || strings.Contains(name, "mobile") || strings.Contains(name, "cellular") {
-			it = C.InterfaceTypeCellular
-		} else if strings.HasPrefix(name, "eth") {
-			it = C.InterfaceTypeEthernet
-		}
-		result = append(result, adapter.NetworkInterface{
-			Interface: control.Interface{
-				Index: intf.Index,
-				Name:  intf.Name,
-				Flags: intf.Flags,
-			},
-			Type: it,
-		})
 	}
+	// Always append a dummy default interface to guarantee at least one working interface exists
+	result = append(result, adapter.NetworkInterface{
+		Interface: control.Interface{
+			Index: 0,
+			Name:  "",
+		},
+		Type: C.InterfaceTypeOther,
+	})
 	return result, nil
 }
 
