@@ -6,7 +6,7 @@ require (
 	github.com/matsuridayo/libneko v1.0.0 // replaced
 	github.com/miekg/dns v1.1.72
 	github.com/oschwald/maxminddb-golang v1.13.1
-	github.com/sagernet/gvisor v0.0.0-20250325023245-7a9c0f5725fb // indirect
+	github.com/sagernet/gvisor v0.0.0-20250811.0-sing-box-mod.1 // indirect
 	github.com/sagernet/quic-go v0.59.0-sing-box-mod.4
 	github.com/sagernet/sing v0.8.11
 	github.com/sagernet/sing-box v1.0.0 // replaced
@@ -91,3 +91,5 @@ require (
 replace github.com/matsuridayo/libneko => ../../libneko
 
 replace github.com/sagernet/sing-box => ../../sing-box
+
+replace github.com/sagernet/gvisor => github.com/sagernet/gvisor v0.0.0-20250811.0-sing-box-mod.1
